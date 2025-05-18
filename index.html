@@ -1,0 +1,286 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D First-Person Museum</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Visual distinction for settings sections and subsections */
+        #settingsMenu h3 {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 1.2em;
+            margin-bottom: 0.5em;
+            color: #ffffff;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            user-select: none;
+            display: flex; /* Align icon and text */
+            align-items: center; /* Align icon and text */
+        }
+        #settingsMenu h4 {
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 1em;
+            margin-bottom: 0.3em;
+            color: #aef8c6;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            user-select: none;
+            display: flex; /* Align icon and text */
+            align-items: center; /* Align icon and text */
+        }
+        .dropdown-icon {
+            /* Using a simple text character for the icon */
+            margin-right: 0.5em;
+            transition: transform 0.2s ease-in-out;
+            display: inline-block; /* Allows transform */
+            user-select: none;
+            width: 1em; /* Ensure consistent spacing */
+        }
+        .settings-section.open > h3 > .dropdown-icon,
+        .settings-subsection.open > h4 > .dropdown-icon {
+            transform: rotate(90deg);
+        }
+        .settings-section-content {
+            display: none;
+            margin-left: 0.5em;
+        }
+        .settings-section.open >    .settings-section-content {
+            display: block;
+        }
+        .settings-subsection-content {
+            display: none;
+            margin-left: 1.5em;
+        }
+        .settings-subsection.open > .settings-subsection-content {
+            display: block;
+        }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div id="settingsMenu" style="display:none;">
+        <h2>Menu</h2>
+        <div id="fileUploaderSection" class="settings-section">
+            <h3><span class="dropdown-icon">&gt;</span>Upload Files</h3>
+            <div class="settings-section-content">
+                <input type="file" id="fileInput" accept="image/*,.txt" multiple>
+                <button id="addItemButton">Add Selected Files</button>
+                <p class="settings-hint">Hint: Add images or .txt files.</p>
+            </div>
+        </div>
+        <hr>
+        <div id="textWriterSection" class="settings-section">
+            <h3><span class="dropdown-icon">&gt;</span>Write Text Entry</h3>
+            <div class="settings-section-content">
+                <textarea id="textWriterInput" rows="10" placeholder="Write your museum entry here..."></textarea>
+                <button id="addTextEntryButton">Add Text to Museum</button>
+            </div>
+        </div>
+        <hr>
+        <div id="settingsSection" class="settings-section">
+            <h3><span class="dropdown-icon">&gt;</span>Settings</h3>
+            <div class="settings-section-content">
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Wall</h4>
+                    <div class="settings-subsection-content" id="wallSettingsSection">
+                        <label> Wall Color:
+                            <input type="color" id="wallColor" value="#998877">
+                        </label><br>
+                        <label for="wallRoughness">Wall Roughness:
+                            <input type="range" id="wallRoughness" min="0" max="1" step="0.01" value="0.8">
+                            <span id="wallRoughnessValue">0.8</span>
+                        </label><br>
+                        <label for="wallMetalness">Wall Metalness:
+                            <input type="range" id="wallMetalness" min="0" max="1" step="0.01" value="0.2">
+                            <span id="wallMetalnessValue">0.2</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Ceiling</h4>
+                    <div class="settings-subsection-content" id="ceilingSettingsSection">
+                        <label>Ceiling Color:
+                            <input type="color" id="ceilingColor" value="#aaaaaa">
+                        </label><br>
+                        <label for="ceilingRoughness">Ceiling Roughness:
+                            <input type="range" id="ceilingRoughness" min="0" max="1" step="0.01" value="0.8">
+                            <span id="ceilingRoughnessValue">0.8</span>
+                        </label><br>
+                        <label for="ceilingMetalness">Ceiling Metalness:
+                            <input type="range" id="ceilingMetalness" min="0" max="1" step="0.01" value="0.2">
+                            <span id="ceilingMetalnessValue">0.2</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Floor</h4>
+                    <div class="settings-subsection-content" id="floorSettingsSection">
+                        <label> Floor Color:
+                            <input type="color" id="floorColor" value="#806040">
+                        </label><br>
+                        <label for="floorRoughness">Floor Roughness:
+                            <input type="range" id="floorRoughness" min="0" max="1" step="0.01" value="0.8">
+                            <span id="floorRoughnessValue">0.8</span>
+                        </label><br>
+                        <label for="floorMetalness">Floor Metalness:
+                            <input type="range" id="floorMetalness" min="0" max="1" step="0.01" value="0.2">
+                            <span id="floorMetalnessValue">0.2</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Ambient Light</h4>
+                    <div class="settings-subsection-content" id="ambientLightSettingsSection">
+                        <label> Ambient Light Color:
+                            <input type="color" id="ambientLightColor" value="#ffffff">
+                        </label>
+                        <label for="ambientLightStrength">Ambient Light Strength:</label>
+                        <input type="range" id="ambientLightStrength" min="0" max="3" step="0.01" value="1.0">
+                        <span id="ambientLightStrengthValue">1.0</span>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Player</h4>
+                    <div class="settings-subsection-content" id="playerSettingsSection">
+                        <label for="playerSpeed">Player Speed:</label>
+                        <input type="range" id="playerSpeed" min="10" max="300" value="200">
+                        <span id="playerSpeedValue">200</span>
+                        <br>
+                        <label for="playerHeight">Player Height:</label>
+                        <input type="range" id="playerHeight" min="0.5" max="4.9" step="0.1" value="1.7"> <span id="playerHeightValue">1.7</span> 
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Lighting / Camera</h4>
+                    <div class="settings-subsection-content" id="lightingCameraSettingsSection">
+                        <label for="mainLightStrength">Directional Light Strength:</label>
+                        <input type="range" id="mainLightStrength" min="0" max="50" step="0.01" value="2.5">
+                        <span id="mainLightStrengthValue">2.5</span>
+                        <br>
+                        <label>
+                            <input type="checkbox" id="shadowToggle" checked>
+                            Enable Shadows
+                        </label>
+                        <br>
+                        <label for="cameraFov">Camera FOV:</label>
+                        <input type="range" id="cameraFov" min="30" max="200" step="1" value="75">
+                        <span id="cameraFovValue">75</span>
+                        <br>
+                        <label for="shadowBlur">Shadow Blur:</label>
+                        <input type="range" id="shadowBlur" min="0" max="1" step="0.01" value="0">
+                        <span id="shadowBlurValue">0</span>
+                        <br>
+                        <label for="shadowOpacity">Shadow Opacity:</label>
+                        <input type="range" id="shadowOpacity" min="0" max="1" step="0.01" value="0.22">
+                        <span id="shadowOpacityValue">0.22</span>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Fog</h4>
+                    <div class="settings-subsection-content" id="fogSettingsSection">
+                        <label for="fogNear">Fog Start (Near):</label>
+                        <input type="range" id="fogNear" min="1" max="200" value="45">
+                        <span id="fogNearValue">45</span>
+                        <br>
+                        <label for="fogFar">Fog End (Far):</label>
+                        <input type="range" id="fogFar" min="10" max="200" value="187">
+                        <span id="fogFarValue">187</span>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Objects</h4>
+                    <div class="settings-subsection-content" id="objectsSettingsSection">
+                        <label for="imageZoffset">Image Offset from Wall:</label>
+                        <input type="range" id="imageZoffset" min="0" max="1" step="0.01" value="0.01">
+                        <span id="imageZoffsetValue">0.01</span>
+                        <br>
+                        <!-- Wall toggles -->
+                        <label>
+                            <input type="checkbox" id="wallNToggle" checked>
+                            Show North Wall
+                        </label>
+                        <br>
+                        <label>
+                            <input type="checkbox" id="wallSToggle" checked>
+                            Show South Wall
+                        </label>
+                        <br>
+                        <label>
+                            <input type="checkbox" id="wallEToggle" checked>
+                            Show East Wall
+                        </label>
+                        <br>
+                        <label>
+                            <input type="checkbox" id="wallWToggle" checked>
+                            Show West Wall
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>  
+        <hr>
+        <div id="saveLoadSection" class="settings-section">
+            <h3><span class="dropdown-icon">&gt;</span>Save/Load Museum</h3>
+            <div class="settings-section-content">
+                <button id="saveToFileButton">Save Museum to File</button>
+                <button id="saveToLocalButton">Save to Local Storage</button>
+                <button id="loadFromLocalButton">Load from Local Storage</button>
+                <input type="file" id="loadGameInput" accept=".zip">
+                <label for="loadGameInput">Load Museum State (.zip):</label>
+                <br>
+            </div>
+        </div>
+        <p class="settings-close-hint">Press H to close the menu.</p>
+    </div>
+
+    <div id="captionModal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid black; z-index: 1000;">
+        <p>Enter caption for the image:</p>
+        <input type="text" id="captionInput" style="width: 300px;">
+        <button id="submitCaptionButton">Submit</button>
+    </div>
+    <div id="loadingIndicator" style="display:none; position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px; z-index: 1001;">
+        Processing...
+    </div>
+
+    <canvas id="museumCanvas"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js/exif.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <script type="module" src="main.js"></script>
+    <script>
+        // Dropdown logic
+        document.addEventListener('DOMContentLoaded', function () {
+            function setupDropdown(selector, contentClass) {
+                document.querySelectorAll(selector).forEach(header => {
+                    header.addEventListener('click', function () {
+                        const parentElement = header.parentElement;
+                        parentElement.classList.toggle('open');
+                    });
+                });
+            }
+
+            setupDropdown('#settingsMenu .settings-section > h3', '.settings-section-content');
+            setupDropdown('#settingsMenu .settings-subsection > h4', '.settings-subsection-content');
+
+            // Open top-level sections by default, subsections remain closed unless explicitly opened
+            document.querySelectorAll('#settingsMenu .settings-section').forEach((section, index) => {
+                // All sections closed by default
+                // To open a section by default, uncomment and adjust as needed:
+                // if (section.id === 'someSectionId') {
+                //     section.classList.add('open');
+                // }
+                // Subsections remain closed unless explicitly opened
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "git": "^0.1.5",
+    "lz-string": "^1.5.0",
+    "npm-git-install": "^0.2.0",
+    "three": "^0.176.0"
+  }
+}
