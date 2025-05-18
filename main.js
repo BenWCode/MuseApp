@@ -85,6 +85,12 @@ function onSettingsChange(settings) {
     });
     SceneSetup.updateMuseumLayout(SceneSetup.getFloorWidth());
     ItemManager.setImageZoffset(settings.imageZoffset); // Update item position immediately
+    SceneSetup.updateRoomParameters({
+        wallHeight: settings.wallHeight,
+        wallDepth: settings.wallDepth,
+        galleryWallZ: settings.galleryWallZ,
+        minGalleryLength: settings.minGalleryLength
+    });
 }
 
 // Callbacks for fileManager to handle caption modal

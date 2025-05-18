@@ -202,27 +202,26 @@
                         <label for="imageZoffset">Image Offset from Wall:</label>
                         <input type="range" id="imageZoffset" min="0" max="1" step="0.01" value="0.01">
                         <span id="imageZoffsetValue">0.01</span>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h4><span class="dropdown-icon">&gt;</span>Room</h4>
+                    <div class="settings-subsection-content" id="roomSettingsSection">
+                        <label for="wallHeight">Wall Height:</label>
+                        <input type="range" id="wallHeight" min="2" max="10" step="0.1" value="5">
+                        <span id="wallHeightValue">5</span>
                         <br>
-                        <!-- Wall toggles -->
-                        <label>
-                            <input type="checkbox" id="wallNToggle" checked>
-                            Show North Wall
-                        </label>
+                        <label for="wallDepth">Wall Depth:</label>
+                        <input type="range" id="wallDepth" min="0.05" max="1" step="0.01" value="0.2">
+                        <span id="wallDepthValue">0.2</span>
                         <br>
-                        <label>
-                            <input type="checkbox" id="wallSToggle" checked>
-                            Show South Wall
-                        </label>
+                        <label for="galleryWallZ">Gallery Unit Width:</label>
+                        <input type="range" id="galleryWallZ" min="-20" max="-1" step="0.1" value="-5">
+                        <span id="galleryWallZValue">-5</span>
                         <br>
-                        <label>
-                            <input type="checkbox" id="wallEToggle" checked>
-                            Show East Wall
-                        </label>
-                        <br>
-                        <label>
-                            <input type="checkbox" id="wallWToggle" checked>
-                            Show West Wall
-                        </label>
+                        <label for="minGalleryLength">Min. Gallery Unit Length:</label>
+                        <input type="range" id="minGalleryLength" min="5" max="50" step="0.1" value="10">
+                        <span id="minGalleryLengthValue">10</span>
                     </div>
                 </div>
             </div>

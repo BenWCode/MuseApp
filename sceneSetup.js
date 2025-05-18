@@ -5,10 +5,10 @@ import * as THREE from 'three';
     let floor, ceiling, wallN, wallS, wallE, wallW;
 
     // Constants
-    export const WALL_HEIGHT = 5;
-    export const WALL_DEPTH = 0.2;
-    export const GALLERY_WALL_Z = -5; // Z position of one of the main display walls
-    export const MIN_GALLERY_LENGTH = 10; // Minimum length for the gallery hall
+    export let WALL_HEIGHT = 5;
+    export let WALL_DEPTH = 0.2;
+    export let GALLERY_WALL_Z = -5; // Z position of one of the main display walls
+    export let MIN_GALLERY_LENGTH = 10; // Minimum length for the gallery hall
 
     // Camera FOV
     export let CAMERA_FOV = 60; // Lowered from 75 to 60 for less distortion
@@ -17,21 +17,15 @@ import * as THREE from 'three';
     let currentWallColor = "#998877";
     let currentCeilingColor = "#aaaaaa";
     let currentFloorColor = "#806040";
-    let currentWallRoughness = 0.9;
-    let currentWallMetalness = 0.0;
-    let currentCeilingRoughness = 0.9;
-    let currentCeilingMetalness = 0.0;
+    let currentWallRoughness = 0.8;
+    let currentWallMetalness = 0.2;
+    let currentCeilingRoughness = 0.8;
+    let currentCeilingMetalness = 0.2;
     let currentFloorRoughness = 0.8;
     let currentFloorMetalness = 0.2;
     let currentBackgroundColor = 0x303040; // Default background, fog might override visual
 
     let cameraShadowMesh = null;
-
-    // Wall visibility toggles (default true)
-    export let wallNVisible = true;
-    export let wallSVisible = true;
-    export let wallEVisible = true;
-    export let wallWVisible = true;
 
     export function initSceneAndRenderer(canvasElement, initialSettings) {
         scene = new THREE.Scene();
@@ -127,13 +121,13 @@ import * as THREE from 'three';
         wallN.position.set(0, WALL_HEIGHT / 2, GALLERY_WALL_Z - WALL_DEPTH / 2);
         wallN.castShadow = true;
         wallN.receiveShadow = true;
-        if (wallNVisible) scene.add(wallN);
+        scene.add(wallN);
 
         wallS = new THREE.Mesh(wallNSGeometry.clone(), mainWallMaterial.clone());
         wallS.position.set(0, WALL_HEIGHT / 2, -GALLERY_WALL_Z + WALL_DEPTH / 2);
         wallS.castShadow = true;
         wallS.receiveShadow = true;
-        if (wallSVisible) scene.add(wallS);
+        scene.add(wallS);
 
         const wallEWGeometry = new THREE.BoxGeometry(roomDepth, WALL_HEIGHT, WALL_DEPTH);
         wallE = new THREE.Mesh(wallEWGeometry, mainWallMaterial.clone());
@@ -141,14 +135,14 @@ import * as THREE from 'three';
         wallE.rotation.y = Math.PI / 2;
         wallE.castShadow = true;
         wallE.receiveShadow = true;
-        if (wallEVisible) scene.add(wallE);
+        scene.add(wallE);
 
         wallW = new THREE.Mesh(wallEWGeometry.clone(), mainWallMaterial.clone());
         wallW.position.set(-(galleryLength / 2) - WALL_DEPTH / 2, WALL_HEIGHT / 2, 0);
         wallW.rotation.y = Math.PI / 2;
         wallW.castShadow = true;
         wallW.receiveShadow = true;
-        if (wallWVisible) scene.add(wallW);
+        scene.add(wallW);
     }
 
     export function applyFogSettings(near, far, color) {
@@ -250,13 +244,28 @@ import * as THREE from 'three';
     }
 
     /**
-     * Set wall visibility flags and update layout.
-     * @param {object} vis - { wallNVisible, wallSVisible, wallEVisible, wallWVisible }
+     * Update room parameters and re-layout the museum.
+     * @param {object} params - { wallHeight, wallDepth, galleryWallZ, minGalleryLength }
      */
-    export function setWallVisibility(vis) {
-        if (typeof vis.wallNVisible === 'boolean') wallNVisible = vis.wallNVisible;
-        if (typeof vis.wallSVisible === 'boolean') wallSVisible = vis.wallSVisible;
-        if (typeof vis.wallEVisible === 'boolean') wallEVisible = vis.wallEVisible;
-        if (typeof vis.wallWVisible === 'boolean') wallWVisible = vis.wallWVisible;
-        updateMuseumLayout(getFloorWidth());
+    export function updateRoomParameters(params = {}) {
+        let needsLayout = false;
+        if (params.wallHeight !== undefined && params.wallHeight !== WALL_HEIGHT) {
+            WALL_HEIGHT = params.wallHeight;
+            needsLayout = true;
+        }
+        if (params.wallDepth !== undefined && params.wallDepth !== WALL_DEPTH) {
+            WALL_DEPTH = params.wallDepth;
+            needsLayout = true;
+        }
+        if (params.galleryWallZ !== undefined && params.galleryWallZ !== GALLERY_WALL_Z) {
+            GALLERY_WALL_Z = params.galleryWallZ;
+            needsLayout = true;
+        }
+        if (params.minGalleryLength !== undefined && params.minGalleryLength !== MIN_GALLERY_LENGTH) {
+            MIN_GALLERY_LENGTH = params.minGalleryLength;
+            needsLayout = true;
+        }
+        if (needsLayout) {
+            updateMuseumLayout(MIN_GALLERY_LENGTH);
+        }
     }

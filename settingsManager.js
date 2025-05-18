@@ -18,11 +18,11 @@ const SETTINGS_SCHEMA = [
     { key: 'floorColor',            input: 'floorColor',            value: null,                      type: 'color',   default: '#806040' },
     { key: 'floorRoughness',        input: 'floorRoughness',        value: 'floorRoughnessValue',      type: 'number',  default: 0.8 },
     { key: 'floorMetalness',        input: 'floorMetalness',        value: 'floorMetalnessValue',      type: 'number',  default: 0.2 },
-    // Wall toggles
-    { key: 'wallNVisible',          input: 'wallNToggle',           value: null,                      type: 'checkbox',default: true },
-    { key: 'wallSVisible',          input: 'wallSToggle',           value: null,                      type: 'checkbox',default: true },
-    { key: 'wallEVisible',          input: 'wallEToggle',           value: null,                      type: 'checkbox',default: true },
-    { key: 'wallWVisible',          input: 'wallWToggle',           value: null,                      type: 'checkbox',default: true },
+    { key: 'wallHeight',         input: 'wallHeight',         value: 'wallHeightValue',         type: 'number',  default: 5 },
+    { key: 'wallDepth',          input: 'wallDepth',          value: 'wallDepthValue',          type: 'number',  default: 0.2 },
+    { key: 'galleryWallZ',       input: 'galleryWallZ',       value: 'galleryWallZValue',       type: 'number',  default: -5 },
+    { key: 'minGalleryLength',   input: 'minGalleryLength',   value: 'minGalleryLengthValue',   type: 'number',  default: 10 },
+  //  { key: 'showFps',               input: 'showFpsToggle',         value: null,                      type: 'checkbox',default: false }
 ];
 
 // --- Internal State ---
@@ -75,7 +75,7 @@ export function initSettingsControls(onSettingsChangeCallback) {
     // Initial notification
     updateAndNotify();
 }
-//test
+
 export function getSettingsState() {
     SETTINGS_SCHEMA.forEach(({ key, input, type }) => {
         const el = elements[input];
