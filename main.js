@@ -4,7 +4,7 @@ import * as PlayerControls from './playerControls.js';
 import * as ItemManager from './itemManager.js';
 import * as FileManager from './fileManager.js';
 import * as SettingsManager from './settingsManager.js';
-import { showLoadingIndicator } from './utils.js';
+import { debounce } from './utils.js';
 
 
 
@@ -58,14 +58,27 @@ function updateCursorLock() {
 // --- Callbacks for Module Interactions ---
 
 // Callback for settingsManager to apply settings changes
+const debouncedApplySettings = debounce(async (settings) => {
+    await applyAllSettings(settings);
+}, 200); // Adjust timing if needed
+
 function onSettingsChange(settings) {
+    debouncedApplySettings(settings);
+}
+
+// Re-export applyAllSettings for fileManager.js usage
+/**
+ * Centralized function to apply all settings and refresh the scene and items.
+ * NOTE: Do NOT call setSettingsUI here to avoid infinite recursion.
+ */
+export async function applyAllSettings(settings) {
     PlayerControls.setPlayerSpeed(settings.playerSpeed);
     PlayerControls.setPlayerEyeLevel(settings.playerEyeLevel);
     SceneSetup.applyLightSettings(
         settings.directionalLightStrength,
         settings.ambientLightStrength,
         settings.ambientLightColor,
-        settings.shadowsEnabled // <-- this is the shadow toggle
+        settings.shadowsEnabled
     );
     SceneSetup.applyFogSettings(
         settings.fogNear,
@@ -83,15 +96,17 @@ function onSettingsChange(settings) {
         floorRoughness: settings.floorRoughness,
         floorMetalness: settings.floorMetalness,
     });
-    // Update room parameters and layout before repositioning items
     SceneSetup.updateRoomParameters({
         wallHeight: settings.wallHeight,
         wallDepth: settings.wallDepth,
         galleryWallZ: settings.galleryWallZ,
         minGalleryLength: settings.minGalleryLength
     });
-    ItemManager.setImageZoffset(settings.imageZoffset); // Update item position immediately
-    ItemManager.updateAllItemPositions(); // Update all item X/Z positions in real time
+    ItemManager.setImageZoffset(settings.imageZoffset);
+    ItemManager.updateAllItemPositions();
+    if (typeof ItemManager.sortAndDisplayItems === 'function') {
+        await ItemManager.sortAndDisplayItems();
+    }
 }
 
 // Callbacks for fileManager to handle caption modal
@@ -250,8 +265,11 @@ function startGame() {
         FileManager.resolveCaptionPrompt(captionInput.value);
     });
 
+    // Start the animation loop
+    animate(); // Start the animation loop
+
     // Initial display of items (if any loaded from save later, this will re-run)
-    // It's also good to run initially in case loading happens before player interaction
+    // Now runs after animation loop and renderer are ready
     afterItemChange(); 
 
     // Instead of calling updateCursorLock() from setTimeout or after loading,
@@ -264,8 +282,6 @@ function startGame() {
             }
         });
     }
-
-    animate(); // Start the animation loop
 }
 
 

@@ -154,3 +154,11 @@ export function showLoadingIndicator(show) {
         loadingIndicator.style.display = show ? 'block' : 'none';
     }
 }
+
+export function debounce(func, wait = 200) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}

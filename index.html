@@ -168,18 +168,18 @@
                         <br>
                         <label>
                             <input type="checkbox" id="shadowToggle" checked>
-                            Enable Shadows
+                            Enable Shadows (Affects Player Shadow & Item Shadows if enabled)
                         </label>
                         <br>
                         <label for="cameraFov">Camera FOV:</label>
                         <input type="range" id="cameraFov" min="30" max="200" step="1" value="75">
                         <span id="cameraFovValue">75</span>
                         <br>
-                        <label for="shadowBlur">Shadow Blur:</label>
+                        <label for="shadowBlur">Player Shadow Blur:</label>
                         <input type="range" id="shadowBlur" min="0" max="1" step="0.01" value="0">
                         <span id="shadowBlurValue">0</span>
                         <br>
-                        <label for="shadowOpacity">Shadow Opacity:</label>
+                        <label for="shadowOpacity">Player Shadow Opacity:</label>
                         <input type="range" id="shadowOpacity" min="0" max="1" step="0.01" value="0.22">
                         <span id="shadowOpacityValue">0.22</span>
                     </div>
@@ -215,12 +215,12 @@
                         <input type="range" id="wallDepth" min="0.05" max="1" step="0.01" value="0.2">
                         <span id="wallDepthValue">0.2</span>
                         <br>
-                        <label for="galleryWallZ">Gallery Unit Width:</label>
+                        <label for="galleryWallZ">Gallery Unit Z Position:</label>
                         <input type="range" id="galleryWallZ" min="-20" max="-1" step="0.1" value="-5">
                         <span id="galleryWallZValue">-5</span>
                         <br>
-                        <label for="minGalleryLength">Min. Gallery Unit Length:</label>
-                        <input type="range" id="minGalleryLength" min="15" max="40" step="0.1" value="10">
+                        <label for="minGalleryLength">Min. Gallery Hall Length:</label>
+                        <input type="range" id="minGalleryLength" min="5" max="80" step="0.1" value="10">
                         <span id="minGalleryLengthValue">10</span>
                     </div>
                 </div>
@@ -230,11 +230,12 @@
         <div id="saveLoadSection" class="settings-section">
             <h3><span class="dropdown-icon">&gt;</span>Save/Load Museum</h3>
             <div class="settings-section-content">
-                <button id="saveToFileButton">Save Museum to File</button>
+                <button id="saveToFileButton">Save Museum to File (.zip)</button>
                 <button id="saveToLocalButton">Save to Local Storage</button>
                 <button id="loadFromLocalButton">Load from Local Storage</button>
-                <input type="file" id="loadGameInput" accept=".zip">
-                <label for="loadGameInput">Load Museum State (.zip):</label>
+                <br>
+                <label for="loadGameInput" class="button-like-label">Load Museum from File (.zip, .json, .txt)</label>
+                <input type="file" id="loadGameInput" accept=".zip,.json,.txt" style="display:none;">
                 <br>
             </div>
         </div>
@@ -258,7 +259,7 @@
     <script>
         // Dropdown logic
         document.addEventListener('DOMContentLoaded', function () {
-            function setupDropdown(selector, contentClass) {
+            function setupDropdown(selector) {
                 document.querySelectorAll(selector).forEach(header => {
                     header.addEventListener('click', function () {
                         const parentElement = header.parentElement;
@@ -267,18 +268,15 @@
                 });
             }
 
-            setupDropdown('#settingsMenu .settings-section > h3', '.settings-section-content');
-            setupDropdown('#settingsMenu .settings-subsection > h4', '.settings-subsection-content');
-
-            // Open top-level sections by default, subsections remain closed unless explicitly opened
-            document.querySelectorAll('#settingsMenu .settings-section').forEach((section, index) => {
-                // All sections closed by default
-                // To open a section by default, uncomment and adjust as needed:
-                // if (section.id === 'someSectionId') {
-                //     section.classList.add('open');
-                // }
-                // Subsections remain closed unless explicitly opened
-            });
+            setupDropdown('#settingsMenu .settings-section > h3');
+            setupDropdown('#settingsMenu .settings-subsection > h4');
+            
+            // Make label for loadGameInput behave like a button
+            const loadGameLabel = document.querySelector('label[for="loadGameInput"]');
+            const loadGameInput = document.getElementById('loadGameInput');
+            if (loadGameLabel && loadGameInput) {
+                loadGameLabel.addEventListener('click', () => loadGameInput.click());
+            }
         });
     </script>
 </body>
