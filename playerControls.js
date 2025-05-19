@@ -72,29 +72,27 @@ function onKeyUpMovement(event) {
 function checkCollisions(playerPosition, currentGalleryLength) {
     const playerRadius = 0.5;
 
-    // Use gallery length for both X and Z for symmetry
-    const eastWallX = currentGalleryLength / 2 + WALL_DEPTH / 2;
-    const westWallX = -currentGalleryLength / 2 - WALL_DEPTH / 2;
-    const northWallZ = -currentGalleryLength / 2 - WALL_DEPTH / 2;
-    const southWallZ = currentGalleryLength / 2 + WALL_DEPTH / 2;
-
     // X-axis collision (East/West walls)
-    if (playerPosition.x > eastWallX - playerRadius) {
-        playerPosition.x = eastWallX - playerRadius;
+    const eastWallX = currentGalleryLength / 2 - playerRadius;
+    const westWallX = -currentGalleryLength / 2 + playerRadius;
+    if (playerPosition.x > eastWallX) {
+        playerPosition.x = eastWallX;
         velocity.x = 0;
     }
-    if (playerPosition.x < westWallX + playerRadius) {
-        playerPosition.x = westWallX + playerRadius;
+    if (playerPosition.x < westWallX) {
+        playerPosition.x = westWallX;
         velocity.x = 0;
     }
 
-    // Z-axis collision (North/South walls)
-    if (playerPosition.z < northWallZ + playerRadius) {
-        playerPosition.z = northWallZ + playerRadius;
+    // Z-axis collision (North/South walls) - use GALLERY_WALL_Z for correct wall alignment
+    const northWallZ = GALLERY_WALL_Z + playerRadius;
+    const southWallZ = -GALLERY_WALL_Z - playerRadius;
+    if (playerPosition.z < northWallZ) {
+        playerPosition.z = northWallZ;
         velocity.z = 0;
     }
-    if (playerPosition.z > southWallZ - playerRadius) {
-        playerPosition.z = southWallZ - playerRadius;
+    if (playerPosition.z > southWallZ) {
+        playerPosition.z = southWallZ;
         velocity.z = 0;
     }
 
@@ -128,7 +126,6 @@ export function updatePlayerMovement(delta, currentGalleryLength) {
         
         checkCollisions(controls.getObject().position, currentGalleryLength);
         let playerPos = getPlayerPosition();
-        console.log(playerPos.x, playerPos.y, playerPos.z);
     }
     _prevTime = performance.now(); // Update prevTime here, though delta is passed in
 }

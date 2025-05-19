@@ -100,6 +100,10 @@ export async function sortAndDisplayItems() {
         let mainMesh;
 
         if (item.type === 'image') {
+            // Support Data URLs from localStorage
+            if (item.imageDataUrl && !item.sourceUrl) {
+                item.sourceUrl = item.imageDataUrl;
+            }
             if (item.file instanceof File && (!item.sourceUrl || !item.sourceUrl.startsWith('blob:'))) {
                  item.sourceUrl = URL.createObjectURL(item.file);
             }
@@ -185,5 +189,29 @@ export async function sortAndDisplayItems() {
         itemGroup.position.set(nextItemPositionX + index * ITEM_SPACING, 0, GALLERY_WALL_Z + _imageZoffset);
         threeScene.add(itemGroup); 
         item.group = itemGroup;
+    }
+}
+
+export function updateAllItemPositions() {
+    // Dynamically update X and Z positions of all items based on current gallery settings
+    const count = museumItems.length;
+    if (count === 0) return;
+    // Calculate spacing so all items fit within the current MIN_GALLERY_LENGTH (no wall clipping)
+    // Place the first and last items just inside the walls, not centered on the wall
+    const galleryHalf = MIN_GALLERY_LENGTH / 2;
+    if (count === 1) {
+        museumItems[0].group.position.x = 0;
+        museumItems[0].group.position.z = GALLERY_WALL_Z + _imageZoffset;
+        return;
+    }
+    const leftEdge = -galleryHalf + 1.75; // 1.75 is half the default image width (3.5/2), adjust if needed
+    const rightEdge = galleryHalf - 1.75;
+    const spacing = (rightEdge - leftEdge) / (count - 1);
+    for (let i = 0; i < count; i++) {
+        const item = museumItems[i];
+        if (item.group) {
+            item.group.position.x = leftEdge + i * spacing;
+            item.group.position.z = GALLERY_WALL_Z + _imageZoffset;
+        }
     }
 }

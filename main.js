@@ -83,14 +83,15 @@ function onSettingsChange(settings) {
         floorRoughness: settings.floorRoughness,
         floorMetalness: settings.floorMetalness,
     });
-    SceneSetup.updateMuseumLayout(SceneSetup.getFloorWidth());
-    ItemManager.setImageZoffset(settings.imageZoffset); // Update item position immediately
+    // Update room parameters and layout before repositioning items
     SceneSetup.updateRoomParameters({
         wallHeight: settings.wallHeight,
         wallDepth: settings.wallDepth,
         galleryWallZ: settings.galleryWallZ,
         minGalleryLength: settings.minGalleryLength
     });
+    ItemManager.setImageZoffset(settings.imageZoffset); // Update item position immediately
+    ItemManager.updateAllItemPositions(); // Update all item X/Z positions in real time
 }
 
 // Callbacks for fileManager to handle caption modal
@@ -116,6 +117,14 @@ function hideCaptionModal() {
 
 // Callback for fileManager and load process after items change
 async function afterItemChange() {
+    // Ensure room parameters are updated after a load
+    const settings = SettingsManager.getSettingsState();
+    SceneSetup.updateRoomParameters({
+        wallHeight: settings.wallHeight,
+        wallDepth: settings.wallDepth,
+        galleryWallZ: settings.galleryWallZ,
+        minGalleryLength: settings.minGalleryLength
+    });
     await ItemManager.sortAndDisplayItems();
     // Optionally update player position if museum size changed significantly,
     // but for now, just redrawing items is enough.

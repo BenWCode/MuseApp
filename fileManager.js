@@ -354,6 +354,7 @@ async function handleLoadGameFile(event) {
             const manifestText = await zip.file('manifest.json').async('string');
             const manifestObj = JSON.parse(manifestText);
             const { settings, museumItems: manifest } = manifestObj;
+            // Always apply all settings, including minGalleryLength
             if (settings && typeof SettingsManager.setSettingsUI === 'function') {
                 SettingsManager.setSettingsUI(settings);
                 console.log("Settings restored from ZIP.");
@@ -409,6 +410,7 @@ async function handleLoadGameFile(event) {
         }
         const loadedData = JSON.parse(jsonString);
         const { settings, museumItems: loadedItems } = loadedData;
+        // Always apply all settings, including minGalleryLength
         if (settings && typeof SettingsManager.setSettingsUI === 'function') {
             SettingsManager.setSettingsUI(settings);
             console.log("Settings restored from file.");
@@ -457,6 +459,10 @@ async function handleLoadGameFile(event) {
         showLoadingIndicator(false);
         event.target.value = '';
         console.log("Museum state loaded successfully.");
+        // --- Ensure screen updates after load ---
+        if (typeof ItemManager.sortAndDisplayItems === 'function') {
+            await ItemManager.sortAndDisplayItems();
+        }
     } catch (error) {
         console.error("Error loading game state:", error);
         showLoadingIndicator(false);
@@ -466,38 +472,26 @@ async function handleLoadGameFile(event) {
 async function saveGameStateToLocalStorage() {
     showLoadingIndicator(true);
     console.log("Saving game state to local storage...");
+    // Always get the full settings object
     const settingsToSave = SettingsManager.getSettingsState();
     const itemsToSave = [];
     const currentItems = ItemManager.getAllMuseumItems();
     console.log(`[saveGameStateToLocalStorage] Number of items to save: ${currentItems.length}`);
     for (const item of currentItems) {
         if (item.type === 'image' && item.file) {
-            let dataUrl = undefined;
-            if (item.file instanceof File) {
-                dataUrl = await fileToDataURL(item.file);
-                console.log(`[saveGameStateToLocalStorage] Image: ${item.file.name}, size: ${item.file.size} bytes`);
-            } else if (item.sourceUrl && item.sourceUrl.startsWith('blob:')) {
-                try {
-                    const response = await fetch(item.sourceUrl);
-                    const blob = await response.blob();
-                    const file = new File([blob], item.file.name, { type: item.file.type });
-                    dataUrl = await fileToDataURL(file);
-                    console.log(`[saveGameStateToLocalStorage] Image (from blob): ${item.file.name}, size: ${blob.size} bytes`);
-                } catch (e) {
-                    console.error("Error converting blob URL to dataUrl:", item.file.name, e);
-                }
-            }
+            // Save image file to IndexedDB, store only a reference in localStorage
+            const imageId = `${item.file.name}_${item.file.lastModified}`;
+            await saveImageToDB(imageId, item.file);
             itemsToSave.push({
                 type: 'image',
                 fileName: item.file.name,
                 fileType: item.file.type,
-                dataUrl: dataUrl, // embed image data
+                imageId: imageId,
                 date: item.date.toISOString(),
                 caption: item.caption,
                 location: item.location,
             });
         } else if (item.type === 'text') {
-            console.log(`[saveGameStateToLocalStorage] Text: ${item.file.name}, length: ${(item.textContent || '').length} chars`);
             itemsToSave.push({
                 type: 'text',
                 fileName: item.file.name,
@@ -510,13 +504,12 @@ async function saveGameStateToLocalStorage() {
         }
     }
     const exportData = {
-        settings: settingsToSave,
+        settings: settingsToSave, // <-- full settings object
         museumItems: itemsToSave,
     };
     try {
-        const compressed = LZString.compressToBase64(JSON.stringify(exportData));
-        console.log(`[saveGameStateToLocalStorage] Compressed data length: ${compressed.length} chars`);
-        localStorage.setItem('museumSaveData', compressed);
+        // No base64 encoding, just plain JSON to minimize size
+        localStorage.setItem('museumSaveData', JSON.stringify(exportData));
         console.log("Game state saved to local storage.");
     } catch (e) {
         console.error("Error saving to local storage:", e);
@@ -528,24 +521,15 @@ async function loadGameStateFromLocalStorage() {
     showLoadingIndicator(true);
     console.log("Loading game state from local storage...");
     try {
-        const compressed = localStorage.getItem('museumSaveData');
-        if (!compressed) {
+        const jsonString = localStorage.getItem('museumSaveData');
+        if (!jsonString) {
             console.warn("No game state found in local storage.");
             showLoadingIndicator(false);
             return;
         }
-        console.log(`[loadGameStateFromLocalStorage] Compressed data length: ${compressed.length} chars`);
-        let jsonString;
-        try {
-            jsonString = LZString.decompressFromBase64(compressed);
-            if (!jsonString) throw new Error('Not compressed or failed decompress');
-            console.log("[loadGameStateFromLocalStorage] Decompressed LZString data.");
-        } catch (e) {
-            jsonString = compressed;
-            console.log("[loadGameStateFromLocalStorage] Using plain JSON data.");
-        }
         const loadedData = JSON.parse(jsonString);
         const { settings, museumItems: loadedItems } = loadedData;
+        // Always apply all settings, including minGalleryLength
         if (settings && typeof SettingsManager.setSettingsUI === 'function') {
             SettingsManager.setSettingsUI(settings);
             console.log("Settings restored from local storage.");
@@ -556,24 +540,23 @@ async function loadGameStateFromLocalStorage() {
         if (Array.isArray(loadedItems)) {
             let count = 0;
             for (const item of loadedItems) {
-                if (item.type === 'image' && item.dataUrl) {
-                    let fileObj = null;
-                    try {
-                        fileObj = dataURLToFile(item.dataUrl, item.fileName, item.fileType);
-                        console.log(`[loadGameStateFromLocalStorage] Reconstructed image file: ${item.fileName}, size: ${fileObj.size} bytes`);
-                    } catch (e) {
-                        console.warn("Could not reconstruct File for image, using dataUrl only.", item.fileName, e);
+                if (item.type === 'image' && item.imageId) {
+                    const fileObj = await getImageFromDB(item.imageId);
+                    let file = null;
+                    let sourceUrl = null;
+                    if (fileObj instanceof File || fileObj instanceof Blob) {
+                        file = new File([fileObj], item.fileName, { type: item.fileType });
+                        sourceUrl = URL.createObjectURL(file);
                     }
                     ItemManager.addItem({
-                        file: fileObj || { name: item.fileName, type: item.fileType },
+                        file: file || { name: item.fileName, type: item.fileType },
                         date: new Date(item.date),
                         type: 'image',
                         caption: item.caption || '',
                         location: item.location || 'N/A',
-                        sourceUrl: fileObj ? URL.createObjectURL(fileObj) : item.dataUrl
+                        sourceUrl: sourceUrl
                     });
                 } else if (item.type === 'text') {
-                    console.log(`[loadGameStateFromLocalStorage] Loaded text item: ${item.fileName}, length: ${(item.textContent || '').length} chars`);
                     ItemManager.addItem({
                         file: { name: item.fileName, type: item.fileType },
                         date: new Date(item.date),
@@ -584,15 +567,18 @@ async function loadGameStateFromLocalStorage() {
                     });
                 }
                 count++;
-                if (count % 5 === 0 || count === loadedItems.length) {
-                    console.log(`Imported ${count} / ${loadedItems.length} items...`);
-                }
             }
             console.log(`All ${loadedItems.length} items imported.`);
         }
         if (_afterItemChangeCallback) await _afterItemChangeCallback();
         showLoadingIndicator(false);
         console.log("Museum state loaded from local storage successfully.");
+        // --- Ensure screen updates after load ---
+
+        
+        if (typeof ItemManager.sortAndDisplayItems === 'function') {
+            await ItemManager.sortAndDisplayItems();
+        }
     } catch (error) {
         console.error("Error loading game state from local storage:", error);
         showLoadingIndicator(false);

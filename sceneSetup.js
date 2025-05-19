@@ -237,7 +237,7 @@ import * as THREE from 'three';
         cameraShadowMesh.rotation.x = -Math.PI / 2;
         cameraShadowMesh.position.y = 0; // Slightly above floor to avoid z-fighting
         cameraShadowMesh.renderOrder = 9999; // Always on top
-      //  scene.add(cameraShadowMesh);
+        scene.add(cameraShadowMesh);
     }
 
     export function updateCameraShadow(playerObject) {
