@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
     export let scene, camera, renderer;
-    let dirLight, ambientLight;
+    let dirLight, dirLight2, ambientLight;
     let floor, ceiling, wallN, wallS, wallE, wallW;
 
     // Constants
@@ -27,6 +27,22 @@ import * as THREE from 'three';
 
     let cameraShadowMesh = null;
 
+    function createDirectionalLight(strength, enableShadows, position, targetPosition) {
+        const light = new THREE.DirectionalLight(0xffffff, strength);
+        light.position.set(position.x, position.y, position.z);
+        light.target.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
+        light.castShadow = enableShadows;
+        light.shadow.mapSize.width = 1024;
+        light.shadow.mapSize.height = 1024;
+        light.shadow.camera.near = 0.5;
+        light.shadow.camera.far = 5;
+        light.shadow.camera.left = -20;
+        light.shadow.camera.right = 20;
+        light.shadow.camera.top = 20;
+        light.shadow.camera.bottom = -20;
+        return light;
+    }
+
     export function initSceneAndRenderer(canvasElement, initialSettings) {
         scene = new THREE.Scene();
         currentBackgroundColor = initialSettings.fogColor || currentBackgroundColor;
@@ -49,25 +65,29 @@ import * as THREE from 'three';
         ambientLight = new THREE.AmbientLight(initialSettings.ambientLightColor, initialSettings.ambientLightStrength);
         scene.add(ambientLight);
 
-        // --- Use DirectionalLight instead of PointLight for dirLight ---
-        dirLight = new THREE.DirectionalLight(0xffffff, initialSettings.directionalLightStrength);
-        dirLight.position.set( 0.32, 0.39, 0.7 );
-        dirLight.target.position.set(0, 0, 0);
+        // --- Directional Lights Setup (refactored) ---
+        dirLight = createDirectionalLight(
+            initialSettings.directionalLightStrength,
+            initialSettings.shadowsEnabled,
+            { x: 0.32, y: 0.39, z: 0.7 },
+            { x: 0, y: 0, z: 0 }
+        );
         scene.add(dirLight.target);
-        dirLight.castShadow = initialSettings.shadowsEnabled;
-        dirLight.shadow.mapSize.width = 1024;
-        dirLight.shadow.mapSize.height = 1024;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far =5;
-        // Set shadow camera bounds to cover the gallery
-        dirLight.shadow.camera.left = -20;
-        dirLight.shadow.camera.right = 20;
-        dirLight.shadow.camera.top = 20;
-        dirLight.shadow.camera.bottom = -20;
         scene.add(dirLight);
+
+        // Identical light in opposite direction (mirrored x and z)
+        dirLight2 = createDirectionalLight(
+            initialSettings.directionalLightStrength,
+            initialSettings.shadowsEnabled,
+            { x: -0.32, y: 0.39, z: -0.7 },
+            { x: 0, y: 0, z: 0 }
+        );
+       // scene.add(dirLight2.target);
+       // scene.add(dirLight2);
+
         if (typeof window !== 'undefined') {
             window.dirLight = dirLight;
-            window.dirLight = dirLight; // For compatibility with main.js UI
+            window.dirLight2 = dirLight2;
         }
         // ---------------------------------------------------------------
     
@@ -158,12 +178,13 @@ import * as THREE from 'three';
     }
 
     export function applyLightSettings(shadowStrength, ambientStrength, ambientColor, enableShadows) {
-        if (dirLight) {
-            dirLight.intensity = shadowStrength;
-            dirLight.castShadow = enableShadows;
-            // DirectionalLight does not have receiveShadow property
-            dirLight.visible = true;
-        }
+        [dirLight, dirLight2].forEach(light => {
+            if (light) {
+                light.intensity = shadowStrength;
+                light.castShadow = enableShadows;
+                light.visible = true;
+            }
+        });
         if (ambientLight) {
             ambientLight.intensity = ambientStrength;
             ambientLight.color.set(ambientColor);
@@ -171,9 +192,7 @@ import * as THREE from 'three';
         if (renderer) {
             console.log("shadows on: " + enableShadows)
             renderer.shadowMap.enabled = enableShadows;
-
         }
-        // Toggle receiveShadow/castShadow for all relevant meshes
         [floor, ceiling, wallN, wallS, wallE, wallW].forEach(obj => {
             if (obj) {
                 obj.receiveShadow = !!enableShadows;

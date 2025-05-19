@@ -72,20 +72,13 @@ function onKeyUpMovement(event) {
 function checkCollisions(playerPosition, currentGalleryLength) {
     const playerRadius = 0.5;
 
-    // Z-axis collision (North/South walls)
-    if (playerPosition.z < GALLERY_WALL_Z + playerRadius + WALL_DEPTH / 2) {
-        playerPosition.z = GALLERY_WALL_Z + playerRadius + WALL_DEPTH / 2;
-        velocity.z = 0;
-    }
-    if (playerPosition.z > -GALLERY_WALL_Z - playerRadius - WALL_DEPTH / 2) {
-        playerPosition.z = -GALLERY_WALL_Z - playerRadius - WALL_DEPTH / 2;
-        velocity.z = 0;
-    }
-    
-    // X-axis collision (East/West walls)
+    // Use gallery length for both X and Z for symmetry
     const eastWallX = currentGalleryLength / 2 + WALL_DEPTH / 2;
     const westWallX = -currentGalleryLength / 2 - WALL_DEPTH / 2;
+    const northWallZ = -currentGalleryLength / 2 - WALL_DEPTH / 2;
+    const southWallZ = currentGalleryLength / 2 + WALL_DEPTH / 2;
 
+    // X-axis collision (East/West walls)
     if (playerPosition.x > eastWallX - playerRadius) {
         playerPosition.x = eastWallX - playerRadius;
         velocity.x = 0;
@@ -93,6 +86,16 @@ function checkCollisions(playerPosition, currentGalleryLength) {
     if (playerPosition.x < westWallX + playerRadius) {
         playerPosition.x = westWallX + playerRadius;
         velocity.x = 0;
+    }
+
+    // Z-axis collision (North/South walls)
+    if (playerPosition.z < northWallZ + playerRadius) {
+        playerPosition.z = northWallZ + playerRadius;
+        velocity.z = 0;
+    }
+    if (playerPosition.z > southWallZ - playerRadius) {
+        playerPosition.z = southWallZ - playerRadius;
+        velocity.z = 0;
     }
 
     // Y-axis collision (floor)
@@ -111,6 +114,7 @@ export function updatePlayerMovement(delta, currentGalleryLength) {
     if (controls && controls.isLocked === true) {
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
+        
 
         direction.z = Number(moveForward) - Number(moveBackward);
         direction.x = Number(moveRight) - Number(moveLeft);
@@ -123,6 +127,8 @@ export function updatePlayerMovement(delta, currentGalleryLength) {
         controls.moveForward(-velocity.z * delta);
         
         checkCollisions(controls.getObject().position, currentGalleryLength);
+        let playerPos = getPlayerPosition();
+        console.log(playerPos.x, playerPos.y, playerPos.z);
     }
     _prevTime = performance.now(); // Update prevTime here, though delta is passed in
 }
